@@ -7,22 +7,40 @@
 #include <fstream>
 #include <algorithm>
 
+////<Settings>//////////
 const int width = 100;
 const int height = 24;
 const int fps = 60;
 const int delta = 1000 / fps;
+const double gravity = 9.8;
+const double objPosX = 50;
+const double objPosY = 12;
+const double objVelX = 100;
+const double objVelY = 50;
 char* frameBuffer = new char[width * height];
+////////////////////////
 
 struct Object{
     char* objectBuffer = nullptr;
     int width = 0;
     int height = 0;
+    double x = 0;
+    double y = 0;
+    double vX = 0;
+    double vY = 0;
 
     Object(int width, int height) {
         objectBuffer = new char[width * height];
         this->width = width;
         this->height = height;
         std::fill_n(objectBuffer, width * height, ' ');
+    }
+
+    Object(int width, int height, int x, int y, int vX, int vY) : Object(width, height){
+        this->x = x;
+        this->y = y;
+        this->vX = vX;
+        this->vY = vY;
     }
 
     ~Object(){
@@ -121,15 +139,51 @@ Object* loadObject(std::string path){
     return obj;
 }
 
-void drawObject(Object* obj, int x, int y){
-    for (int i = 0; i < width * height; i++){
-        frameBuffer[i] = ' ';
+void clearFrameBuffer(){
+    for (int i = 0; i < height; i++){
+        for (int j = 0; j < width; j++){
+            if (i == 0 || i == height - 1 || j == 0 || j == width - 1){
+                frameBuffer[i * width + j] = '#';
+                continue;
+            }
+            int index = i * width + j;
+            frameBuffer[index] = ' ';
+        }
     }
+}
+
+void drawObject(Object* obj){
 
     for (int i = 0; i < obj->height; i++){
         for (int j = 0; j < obj->width; j++){
-            frameBuffer[(y + i) * width + (x + j)] = obj->objectBuffer[i * obj->width + j];
+            char& val = obj->objectBuffer[i * obj->width + j];
+            if (val == ' ') continue;
+            int pixelX = static_cast<int>(obj->x);
+            int pixelY = static_cast<int>(obj->y);
+            frameBuffer[(pixelY + i) * width + (pixelX + j)] = val;
         }
+    }
+}
+
+void updateObject(Object* obj){
+    double deltaSeconds = delta / 1000.0;
+    obj->x = obj->x + obj->vX * deltaSeconds;
+    obj->y = obj->y + (obj->vY * deltaSeconds + 0.5 * gravity * deltaSeconds * deltaSeconds);
+
+    if (obj->x < 1){
+        obj->vX = -obj->vX;
+        obj->x = 1;
+    } else if (obj->x + obj->width >= width - 1){
+        obj->vX = -obj->vX;
+        obj->x = width - obj->width - 1;
+    }
+
+    if (obj->y < 1){
+        obj->vY = -obj->vY;
+        obj->y = 1;
+    } else if (obj->y + obj->height >= height - 1){
+        obj->vY = -obj->vY;
+        obj->y = height - obj->height - 1;
     }
 }
 
@@ -138,14 +192,20 @@ int main(int argc, char *argv[]){
     std::flush(std::cout);
 
     Object* obj = loadObject("object.txt");
+    obj->x = objPosX;
+    obj->y = objPosY;
+    obj->vX = objVelX;
+    obj->vY = objVelY;
 
     if (obj == nullptr){
         std::cout << "Failed to load object" << std::endl;
         return 1;
     } 
 
-    for (int i = 0; i < 20; i++){
-        drawObject(obj, i, 5);
+    while (true){
+        clearFrameBuffer();
+        updateObject(obj);
+        drawObject(obj);
         render();
         std::this_thread::sleep_for(std::chrono::milliseconds(delta));     
     }
