@@ -17,4 +17,4 @@ It can, of course, support multiple object rendering on the screen, but only bou
 
 # Sample
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/KalUCRWm11Q/0.jpg)](https://www.youtube.com/watch?v=KalUCRWm11Q)
+[![YouTube](http://i.ytimg.com/vi/KalUCRWm11Q/hqdefault.jpg)](https://www.youtube.com/watch?v=KalUCRWm11Q)
